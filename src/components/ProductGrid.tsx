@@ -1,0 +1,57 @@
+import { useEffect, useState } from "react";
+import { fetchProducts, ShopifyProduct } from "@/lib/shopify";
+import { ProductCard } from "./ProductCard";
+import { Loader2 } from "lucide-react";
+
+interface ProductGridProps {
+  category?: string;
+}
+
+export const ProductGrid = ({ category }: ProductGridProps) => {
+  const [products, setProducts] = useState<ShopifyProduct[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const loadProducts = async () => {
+      setLoading(true);
+      try {
+        const query = category ? `product_type:${category}` : undefined;
+        const data = await fetchProducts(50, query);
+        setProducts(data);
+      } catch (error) {
+        console.error('Error loading products:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadProducts();
+  }, [category]);
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center py-20">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (products.length === 0) {
+    return (
+      <div className="text-center py-20">
+        <p className="text-lg text-muted-foreground mb-4">No products found</p>
+        <p className="text-sm text-muted-foreground">
+          Create your first product by telling me what you'd like to add!
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+      {products.map((product) => (
+        <ProductCard key={product.node.id} product={product} />
+      ))}
+    </div>
+  );
+};
